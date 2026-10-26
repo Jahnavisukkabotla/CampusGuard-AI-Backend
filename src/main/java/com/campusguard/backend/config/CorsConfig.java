@@ -16,10 +16,13 @@ public class CorsConfig {
 
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of(
-                "http://localhost:5173",
-                "https://campus-guard-n0z0u2tua-jahnavisukkabotlas-projects.vercel.app"
-        ));
+       
+configuration.setAllowedOrigins(List.of(
+    "http://localhost:5173",
+    "https://campus-guard-ai.vercel.app",
+    "https://campus-guard-n0z0u2tua-jahnavisukkabotlas-projects.vercel.app"
+));
+
 
         configuration.setAllowedMethods(List.of(
                 "GET", "POST", "PUT", "DELETE", "OPTIONS"
