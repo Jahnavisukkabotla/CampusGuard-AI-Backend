@@ -1,4 +1,4 @@
-package com.campusguard.backend.service;
+/*package com.campusguard.backend.service;
 
 import com.campusguard.backend.entity.Email;
 import com.campusguard.backend.repository.EmailRepository;
@@ -52,6 +52,80 @@ public class EmailService {
         score = Math.min(score, 100);
         return score;
 
+    }
+
+    public List<Email> getAllEmails() {
+        return emailRepository.findAll();
+    }
+
+    public Email getEmailById(Long id) {
+        return emailRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Email not found"));
+    }
+
+    public void deleteEmail(Long id) {
+        emailRepository.deleteById(id);
+    }
+}
+*/
+
+package com.campusguard.backend.service;
+
+import com.campusguard.backend.entity.Email;
+import com.campusguard.backend.repository.EmailRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+
+import java.util.List;
+import java.util.Map;
+
+@Service
+public class EmailService {
+
+    @Autowired
+    private EmailRepository emailRepository;
+
+    private final RestTemplate restTemplate = new RestTemplate();
+
+    private static final String ML_API_URL =
+            "https://campusguard-ml.onrender.com/predict";
+
+    public Email analyzeEmail(Email email) {
+
+        Map<String, String> requestBody = Map.of(
+                "subject", email.getSubject() == null ? "" : email.getSubject(),
+                "body", email.getBody() == null ? "" : email.getBody()
+        );
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<Map<String, String>> request =
+                new HttpEntity<>(requestBody, headers);
+
+        ResponseEntity<Map> response = restTemplate.postForEntity(
+                ML_API_URL, request, Map.class
+        );
+
+        Map<String, Object> result = response.getBody();
+
+        if (result == null || result.get("riskScore") == null
+                || result.get("status") == null) {
+            throw new RuntimeException("Invalid response from ML service");
+        }
+
+        int riskScore = ((Number) result.get("riskScore")).intValue();
+        String status = result.get("status").toString();
+
+        email.setRiskScore(riskScore);
+        email.setStatus(status);
+
+        return emailRepository.save(email);
     }
 
     public List<Email> getAllEmails() {
